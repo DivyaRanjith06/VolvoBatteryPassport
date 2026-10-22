@@ -1,0 +1,19 @@
+{
+  "name": "volvobatterypassport",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "forge-std": "github:foundry-rs/forge-std",
+    "hardhat": "^3.20.0",
+    "typescript": "~6.0.3"
+  }
+}

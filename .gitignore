@@ -1,0 +1,48 @@
+# Node modules
+/node_modules
+
+# Compilation output
+/dist
+
+# pnpm deploy output
+/bundle
+
+# Hardhat Build Artifacts
+/artifacts
+
+# Hardhat compilation (v2) support directory
+/cache
+
+# Typechain output
+/types
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Hardhat coverage reports
+/coverage
+
+# Gas snapshot files
+/.gas-snapshot
+
+# Snapshot cheatcodes output
+/snapshots
+
+# Local operating system files
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Frontend dependencies and build output
+/frontend/node_modules/
+/frontend/dist/
+
+# Local Hardhat state
+/hardhat-deployments/
+
+# Temporary Microsoft Office files
+~$*.pptx
+~$*.docx
+~$*.xlsx
