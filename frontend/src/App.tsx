@@ -4,10 +4,12 @@ import {
   CHAIN_ID,
   RPC_URL,
   Role,
+  STAGE_NAMES,
   contract,
   describeError,
   makeWalletClient,
   publicClient,
+  revertReason,
   roleName,
   shortAddress,
   type PublicPassport,
@@ -178,7 +180,7 @@ export default function App() {
   const [tx, setTx] = useState<TxState | null>(null);
   const txBusy = tx?.phase === "signing" || tx?.phase === "mining";
 
-  const submit: Submit = async (label, batchId, write) => {
+  const submit: Submit = async (label, batchId, write, expectedStage) => {
     if (!account || !wallet) {
       setTx({ label, phase: "error", message: "Connect MetaMask first." });
       return false;
@@ -188,17 +190,36 @@ export default function App() {
       return false;
     }
     setTx({ label, phase: "signing" });
+    let hash: Hash | null = null;
     try {
-      const hash = await write({ account, wallet });
+      hash = await write({ account, wallet });
       setTx({ label, phase: "mining", hash });
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
-      if (receipt.status !== "success") throw new Error(`Transaction ${hash} reverted.`);
+      if (receipt.status !== "success") {
+        setTx({ label, phase: "error", message: await revertReason(hash, receipt.blockNumber) });
+        return false;
+      }
+      // A mined receipt is not enough: confirm the contract state actually changed.
+      if (batchId && expectedStage !== undefined) {
+        const after = await publicClient.readContract({ ...contract, functionName: "getPublicPassport", args: [batchId] });
+        if (after.currentStage !== expectedStage) {
+          setTx({
+            label,
+            phase: "error",
+            message:
+              `Transaction ${hash} was mined, but batch "${batchId}" is at stage ` +
+              `${STAGE_NAMES[after.currentStage]} instead of ${STAGE_NAMES[expectedStage]}.`,
+          });
+          return false;
+        }
+      }
       setTx({ label, phase: "success", hash, block: receipt.blockNumber });
       setRoleRefresh((n) => n + 1);
       if (batchId) await lookupBatch(batchId);
       return true;
     } catch (error) {
-      setTx({ label, phase: "error", message: describeError(error) });
+      const prefix = hash ? `Transaction ${hash} was sent, but confirming it failed: ` : "";
+      setTx({ label, phase: "error", message: prefix + describeError(error) });
       return false;
     }
   };

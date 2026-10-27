@@ -4,6 +4,7 @@ import {
   ROLE_NAMES,
   Role,
   STAGE_NAMES,
+  Stage,
   contract,
   describeError,
   publicClient,
@@ -16,11 +17,15 @@ export interface TxContext {
   wallet: AppWalletClient;
 }
 
-/** Runs a write: shows pending/success/failure, waits for the receipt, then refreshes `batchId`. */
+/**
+ * Runs a write: shows pending/success/failure, waits for the receipt, then refreshes `batchId`.
+ * With `expectedStage`, success is reported only if the batch is at that stage after the receipt.
+ */
 export type Submit = (
   label: string,
   batchId: string | null,
   write: (ctx: TxContext) => Promise<Hash>,
+  expectedStage?: number,
 ) => Promise<boolean>;
 
 type Values = Record<string, string | boolean>;
@@ -217,7 +222,7 @@ export function SupplierPanel({ submit, disabled, batchId }: PanelProps) {
               account: ctx.account,
             });
             return ctx.wallet.writeContract(request);
-          });
+          }, Stage.Registered);
         }}
       />
       <ActionForm
@@ -246,7 +251,7 @@ export function SupplierPanel({ submit, disabled, batchId }: PanelProps) {
               account: ctx.account,
             });
             return ctx.wallet.writeContract(request);
-          });
+          }, Stage.Refined);
         }}
       />
       <ActionForm
@@ -267,7 +272,7 @@ export function SupplierPanel({ submit, disabled, batchId }: PanelProps) {
               account: ctx.account,
             });
             return ctx.wallet.writeContract(request);
-          });
+          }, Stage.EndOfLife);
         }}
       />
       <ActionForm
@@ -288,7 +293,7 @@ export function SupplierPanel({ submit, disabled, batchId }: PanelProps) {
               account: ctx.account,
             });
             return ctx.wallet.writeContract(request);
-          });
+          }, Stage.Recycled);
         }}
       />
     </div>
@@ -337,7 +342,7 @@ export function ManufacturerPanel({ submit, disabled, batchId }: PanelProps) {
               account: ctx.account,
             });
             return ctx.wallet.writeContract(request);
-          });
+          }, Stage.Manufactured);
         }}
       />
       <ActionForm
@@ -358,7 +363,7 @@ export function ManufacturerPanel({ submit, disabled, batchId }: PanelProps) {
               account: ctx.account,
             });
             return ctx.wallet.writeContract(request);
-          });
+          }, Stage.Distributed);
         }}
       />
     </div>

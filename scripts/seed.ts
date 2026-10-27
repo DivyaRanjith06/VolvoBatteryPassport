@@ -5,10 +5,9 @@
  * Run (with `npx hardhat node` running in another terminal):
  *   npx hardhat run scripts/seed.ts --network localhost
  *
- * IMPORTANT: CONTRACT_ADDRESS is only valid for the current run of the local
- * node. Restarting `npx hardhat node` wipes the chain; after redeploying with
- * scripts/deploy.ts, update CONTRACT_ADDRESS below or set the environment
- * variable BATTERY_PASSPORT_ADDRESS to the newly printed address.
+ * The contract address is read from frontend/src/contract.ts, which
+ * scripts/deploy.ts rewrites on every deployment (override with the
+ * BATTERY_PASSPORT_ADDRESS environment variable).
  *
  * Safe to rerun: the script reads the batch's current stage and performs only
  * the remaining stages, in order. All data below is fictional demo data.
@@ -18,11 +17,12 @@
  */
 import { readFile } from "node:fs/promises";
 import { artifacts, network } from "hardhat";
+import { resolveContractAddress } from "./frontend-config.ts";
 
 type Address = `0x${string}`;
 
-const CONTRACT_ADDRESS = (process.env.BATTERY_PASSPORT_ADDRESS ??
-  "0x5fbdb2315678afecb367f032d93f642f64180aa3") as Address;
+// Same address the dashboard uses (written by deploy.ts), unless BATTERY_PASSPORT_ADDRESS is set.
+const CONTRACT_ADDRESS: Address = await resolveContractAddress();
 
 // Mirrors `enum Role` and `enum Stage` in contracts/BatteryPassport.sol.
 const Role = { None: 0n, Admin: 1n, Supplier: 2n, Manufacturer: 3n, Regulator: 4n, Customer: 5n } as const;

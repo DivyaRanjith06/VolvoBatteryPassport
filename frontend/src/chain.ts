@@ -11,6 +11,7 @@ import {
   type Address,
   type ContractFunctionReturnType,
   type EIP1193Provider,
+  type Hash,
 } from "viem";
 import { hardhat } from "viem/chains";
 import { BATTERY_PASSPORT_ABI, BATTERY_PASSPORT_ADDRESS, CHAIN_ID } from "./contract";
@@ -81,8 +82,30 @@ export function shortAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+/**
+ * Recovers the revert reason of a mined, failed transaction by replaying it
+ * against the state just before its block (automine mines one tx per block).
+ */
+export async function revertReason(hash: Hash, blockNumber: bigint): Promise<string> {
+  const fallback = `Transaction ${hash} reverted on-chain in block ${blockNumber}.`;
+  try {
+    const tx = await publicClient.getTransaction({ hash });
+    await publicClient.call({ account: tx.from, to: tx.to, data: tx.input, blockNumber: blockNumber - 1n });
+    return fallback;
+  } catch (error) {
+    return `${fallback} Reason: ${describeError(error)}`;
+  }
+}
+
 /** Turns viem / MetaMask errors into a message a user can act on. */
 export function describeError(error: unknown): string {
+  const text = error instanceof Error ? `${error.message} ${(error as BaseError).details ?? ""}` : String(error);
+  if (/nonce too (high|low)|invalid nonce|nonce.*expected/i.test(text)) {
+    return (
+      "MetaMask's nonce for this account is out of sync with the local Hardhat node (this happens after the " +
+      "node is restarted). In MetaMask open Settings → Advanced → Clear activity tab data, then try again."
+    );
+  }
   if (error instanceof BaseError) {
     const reverted = error.walk((e) => e instanceof ContractFunctionRevertedError);
     if (reverted instanceof ContractFunctionRevertedError) {

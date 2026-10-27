@@ -1,4 +1,5 @@
 import { artifacts, network } from "hardhat";
+import { writeFrontendConfig } from "./frontend-config.ts";
 
 type Address = `0x${string}`;
 
@@ -63,3 +64,7 @@ console.log(`Tx hash:  ${txHash}`);
 console.log(`Block:    ${BigInt(receipt.blockNumber)}`);
 console.log("");
 console.log(`BatteryPassport deployed to: ${receipt.contractAddress}`);
+
+// Keep the dashboard and seed.ts pointed at THIS deployment (prevents stale-address mismatches).
+const { destination } = await writeFrontendConfig(receipt.contractAddress);
+console.log(`Frontend config updated: ${destination}`);
